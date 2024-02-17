@@ -1,13 +1,8 @@
 <IfModule mod_rewrite.c>
-    Options +FollowSymLinks
     RewriteEngine On
-
-    # Redirect everything to the public folder
-    RewriteCond %{REQUEST_URI} !^/public/
-    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteBase /
+    RewriteRule ^index\.php$ - [L]
     RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^(.*)$ /public/$1 [L]
-
-    # Redirect specific URL to public/index.php
-    RewriteRule ^developer-dashboard\.smallsmall\.com(/.*)?$ public/index.php [L]
-</IfModule>
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /index.php [L]
+    </IfModule>

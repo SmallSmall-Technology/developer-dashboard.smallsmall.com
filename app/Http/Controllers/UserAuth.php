@@ -14,7 +14,7 @@ use App\Models\State;
 
 use App\Models\City;
 
-use App\Models\Property;
+use App\Models\property;
 
 use App\Models\Product;
 
@@ -1230,7 +1230,7 @@ class UserAuth extends Controller
     {
         $developers = Developer::all();
 
-        $propertys = Property::all();
+        $propertys = property::all();
 
         $products = Product::all();
 
@@ -1279,7 +1279,7 @@ class UserAuth extends Controller
     {
         $developers = Developer::all();
 
-        $propertys = Property::all();
+        $propertys = property::all();
 
         $products = Product::all();
 
@@ -1298,7 +1298,7 @@ class UserAuth extends Controller
         $parentPropty = $request->parentPropty;
         $receivable = $request->receivable;
         
-        $user = Property::where('propertyID', $propty)
+        $user = property::where('propertyID', $propty)
                 ->update(['availability' => $availability, 'receivable' => $receivable,]);
         
         if($user)
