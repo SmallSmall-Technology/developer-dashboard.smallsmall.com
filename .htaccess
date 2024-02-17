@@ -1,30 +1,8 @@
-# RewriteEngine On
-
-# RewriteCond %{REQUEST_FILENAME} -d [OR]
-# RewriteCond %{REQUEST_FILENAME} -f
-# RewriteRule ^ ^$1 [N]
-
-# RewriteCond %{REQUEST_URI} (\.\w+$) [NC]
-# RewriteRule ^(.*)$ developer-dashboard.smallsmall.com/public/$1 
-
-# RewriteCond %{REQUEST_FILENAME} !-d
-# RewriteCond %{REQUEST_FILENAME} !-f
-# RewriteRule ^ server.php
-
-
 <IfModule mod_rewrite.c>
-    <IfModule mod_negotiation.c>
-        Options -MultiViews -Indexes
-    </IfModule>
-
-    RewriteEngine On
-
-    # Redirect Trailing Slashes If Not A Folder...
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)/$ /$1 [L,R=301]
-
-    # Handle Front Controller...
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ developer-dashboard.smallsmall.com/index.php [L]
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
 </IfModule>
