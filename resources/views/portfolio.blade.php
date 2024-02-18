@@ -265,7 +265,7 @@
             <div class="row">
 
               @foreach($totResults as $totResult)
-              <div class="col-12 col-md-6">
+              <div class="col-12 col-md-6 mb-3">
                 <div class="portfolio-container p-3">
 
                   <div class="d-flex justify-content-between">
@@ -314,8 +314,8 @@
 
                 </div>
               </div>
-              <div class="col-6"></div>
-              <div class="col-6"></div>
+              <!--<div class="col-6"></div>-->
+              <!--<div class="col-6"></div>-->
               @endforeach
             </div>
 
