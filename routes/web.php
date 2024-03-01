@@ -26,13 +26,15 @@ Route::post("/login/check", [UserAuth::class, 'check']);
 //     return view('portfolioDetail');
 // });
 
-Route::group(['middleware' => ['protectedPage']],function(){
+Route::group(['middleware' => ['protectedPage']], function () {
 
     Route::get("/home", [UserAuth::class, 'index']);
 
     Route::get("/addProject", [UserAuth::class, 'addProject']);
 
     Route::post("/addProjects", [UserAuth::class, 'insertProject']);
+
+    Route::post("/editProjects", [UserAuth::class, 'editProject']);
 
     Route::get("/portfolio", [UserAuth::class, 'portfolio']);
 
@@ -49,20 +51,25 @@ Route::group(['middleware' => ['protectedPage']],function(){
     Route::post("/unitFilter", [UserAuth::class, 'unitFilter']);
 
     Route::post("/addProjectTypes", [UserAuth::class, 'insertProjectTypes']);
-
 });
 
 
-Route::group(['middleware' => ['protectedAccounts']],function(){
+Route::group(['middleware' => ['protectedAccounts']], function () {
+
+    Route::get("/projectPayout", [UserAuth::class, 'projectPayout']);
+
+    Route::post("/addPayouts", [UserAuth::class, 'addPayout']);
+});
+
+Route::group(['middleware' => ['protectedCx']], function () {
 
     Route::get("/updateProject", [UserAuth::class, 'updateProject']);
 
     Route::post("/updtPayouts", [UserAuth::class, 'updtPayouts']);
 
-    Route::get("/projectPayout", [UserAuth::class, 'projectPayout']);
-
-    Route::post("/addPayouts", [UserAuth::class, 'addPayout']);
-
+    Route::get("/insertProject", [UserAuth::class, 'insrtProject']);
+    
+    Route::post("/insertProperty", [UserAuth::class, 'insrtProjects']);
 });
 
 Route::get("/logout", [UserAuth::class, 'logout']);
