@@ -34,6 +34,8 @@ Route::group(['middleware' => ['protectedPage']], function () {
 
     Route::post("/addProjects", [UserAuth::class, 'insertProject']);
 
+    Route::post("/editProjects", [UserAuth::class, 'editProject']);
+
     Route::get("/portfolio", [UserAuth::class, 'portfolio']);
 
     Route::get("/portfolioDetail/{id}", [UserAuth::class, 'portfolioDetail']);
@@ -54,13 +56,10 @@ Route::group(['middleware' => ['protectedPage']], function () {
 
 Route::group(['middleware' => ['protectedAccounts']], function () {
 
-    Route::get("/updateProject", [UserAuth::class, 'updateProject']);
-
-    Route::post("/updtPayouts", [UserAuth::class, 'updtPayouts']);
-
     Route::get("/projectPayout", [UserAuth::class, 'projectPayout']);
 
     Route::post("/addPayouts", [UserAuth::class, 'addPayout']);
+
 });
 
 Route::get("/logout", [UserAuth::class, 'logout']);

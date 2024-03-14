@@ -14,7 +14,7 @@ use App\Models\State;
 
 use App\Models\City;
 
-use App\Models\Property;
+use App\Models\property;
 
 use App\Models\Product;
 
@@ -33,7 +33,9 @@ class UserAuth extends Controller
         $email = $request->email;
         $pass =  md5($request->password);
 
+        //dd(md5('password'));
         //dd(md5('Account123'));
+        //dd(md5('Cx@123'));
 
         $users = Developer::where('email', $email)->where('password', $pass)->count();
 
@@ -56,6 +58,25 @@ class UserAuth extends Controller
                 //$account = $request->session()->get('account');
 
                 echo 0;
+            }
+
+            elseif($email == 'cx@smallsmall.com' && $pass == 'd349ec6e6f0a1bab6fe30992e1566fc2')
+            {
+                $request->session()->put('cx', $email);
+
+                $request->session()->put('user', $email);
+
+                $users = Developer::where('email', $email)->where('password', $pass)->get();
+
+                foreach($users as $user)
+                {
+                    $developerID = $user['developer_id'];
+                    $request->session()->put('developerID', $developerID);
+                }
+
+                //$account = $request->session()->get('account');
+
+                echo 3;
             }
 
             else
@@ -320,6 +341,8 @@ class UserAuth extends Controller
         $landTitle =  $request->landTitle;
         $approvals =  $request->approvals;
 
+        $service = '';
+
         if($swimming == 'yes')
         {
             $swimming = 'swimming';
@@ -387,8 +410,8 @@ class UserAuth extends Controller
 
         
         if($user->save())
-        {
-            echo 1;
+        {                
+            echo 1;   
         }
 
         else
@@ -493,14 +516,170 @@ class UserAuth extends Controller
         
         if($user->save())
         {
-            echo 1;
+            require '../vendor/autoload.php'; // For Unione template authoload
+		
+            // Unione Template
+
+            $headers = array(
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+                'X-API-KEY' => '6bgqu7a8bd7xszkz1uonenrxwpdeium56kb1kb3y',
+            );
+
+            $client = new \GuzzleHttp\Client([
+                'base_uri' => 'https://eu1.unione.io/en/transactional/api/v1/'
+            ]);
+
+            $requestBody = [
+                "id" => "3a441482-c666-11ee-9984-a285586d3219"
+            ];
+
+            $requestCxBody = [
+                "id" => "9ba9f8e6-c737-11ee-a263-de9a1a910f06"
+            ];
+
+            $developerId = $request->session()->get('developerID');
+            $users = Developer::where('developer_id', $developerId)->get();
+
+            foreach($users as $user)
+            {
+                $developerName = $user['company_name'];
+                $developerEmail = $user['email'];
+            }
+
+            //Unione Template
+
+            try {
+                $response = $client->request('POST', 'template/get.json', array(
+                    'headers' => $headers,
+                    'json' => $requestBody,
+                ));
+
+                $jsonResponse = $response->getBody()->getContents();
+
+                $responseData = json_decode($jsonResponse, true);
+
+                $htmlBody = $responseData['template']['body']['html'];
+
+                // $username = $data['name'];
+                // //$propertyName = $data['propName'];
+                // $amount = number_format($data['Amount']);
+                // $plan = $data['Plan'];
+                // $plancode = $data['plancode'];
+                // $chargeDate = $data['chargeDate'];
+                // $bookingID = $data['bookingID'];
+                // $currdate = $data['currentdate'];
+
+                //Replace the placeholder in the HTML body with the username
+
+                $htmlBody = str_replace('{{Name}}', $developerName, $htmlBody);
+                // $htmlBody = str_replace('{{PlanID}}', $plancode, $htmlBody);
+                // $htmlBody = str_replace('{{RecurringAmount}}', $amount, $htmlBody);
+                // $htmlBody = str_replace('{{Plan}}', $plan, $htmlBody);
+                // $htmlBody = str_replace('{{NextChargedate}}', $chargeDate, $htmlBody);
+                // $htmlBody = str_replace('{{BookingID}}', $bookingID, $htmlBody);
+                // $htmlBody = str_replace('{{Date}}', $currdate, $htmlBody);
+
+                $data['response'] = $htmlBody;
+
+                // Prepare the email data
+                $emailData = [
+                    "message" => [
+                        "recipients" => [
+                            ["email" => $developerEmail],
+                            //["email" => 'pidah.t@smallsmall.com']
+                        ],
+                        "body" => ["html" => $htmlBody],
+                        "subject" => "Property Listing",
+                        "from_email" => "donotreply@smallsmall.com",
+                        "from_name" => "Small Small",
+                    ],
+                ];
+
+                // Send the email using the Unione API
+                $responseEmail = $client->request('POST', 'email/send.json', [
+                    'headers' => $headers,
+                    'json' => $emailData,
+                ]);
+            } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+                $data['response'] = $e->getMessage();
+            }
+
+            if ($responseEmail) {
+
+                //$location = $city.' '.$state;
+
+                $users = Project::where('project_id', $project_id)->get();
+
+                foreach($users as $user)
+                {
+                    $projectName = $user['project_name'];
+                    $unitNumber = $user['unit_number'];
+                    $price = $user['unit_amount'];
+                    $location = $user['city'].' '.$user['state'];
+                }
+
+                $selPrice = number_format($selPrice); 
+
+                try {
+                    $response = $client->request('POST', 'template/get.json', array(
+                        'headers' => $headers,
+                        'json' => $requestCxBody,
+                    ));
+
+                    $jsonResponse = $response->getBody()->getContents();
+
+                    $responseData = json_decode($jsonResponse, true);
+
+                    $htmlBody = $responseData['template']['body']['html'];
+
+                    // Replace the placeholder in the HTML body with the username
+
+                    $htmlBody = str_replace('{{Propertydeveloper}}', $developerName, $htmlBody);
+                    $htmlBody = str_replace('{{Projectname}}', $projectName, $htmlBody);
+                    $htmlBody = str_replace('{{numberofunits}}', $unitNumber, $htmlBody);
+                    $htmlBody = str_replace('{{Propertyprice}}', $selPrice, $htmlBody);
+                    $htmlBody = str_replace('{{Location}}', $location, $htmlBody);
+                    // $htmlBody = str_replace('{{BookingID}}', $bookingID, $htmlBody);
+                    // $htmlBody = str_replace('{{Date}}', $currdate, $htmlBody);
+            
+                    $data['response'] = $htmlBody;
+
+                    // Prepare the email data
+                    $emailCxData = [
+                        "message" => [
+                            "recipients" => [
+                                ["email" => 'marketing@smallsmall.com'],
+                                ["email" => 'james.o@smallsmall.com'],
+                                ["email" => 'hello@buysmallsmall.ng'],
+                                ["email" => 'tunde.b@smallsmall.com'],
+                                ["email" => 'naomi.o@smallsmall.com'],
+                                ["email" => 'pidah.t@smallsmall.com']
+                            ],
+                            "body" => ["html" => $htmlBody],
+                            "subject" => "EDAP Property Listing!",
+                            "from_email" => "donotreply@smallsmall.com",
+                            "from_name" => "Small Small",
+                        ],
+                    ];
+
+                    // Send the email using the Unione API
+                    $responseEmail = $client->request('POST', 'email/send.json', [
+                        'headers' => $headers,
+                        'json' => $emailCxData,
+                    ]);
+                } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+                    $data['response'] = $e->getMessage();
+                }
+
+                echo 1;
+            }
         }
 
         else
         {
             echo 2;
         }
-
     }
 
     public function insertProjectTypes(Request $request)
@@ -1230,7 +1409,7 @@ class UserAuth extends Controller
     {
         $developers = Developer::all();
 
-        $propertys = Property::all();
+        $propertys = property::all();
 
         $products = Product::all();
 
@@ -1265,7 +1444,148 @@ class UserAuth extends Controller
 
         if($user->save())
         {
-            echo 1;
+            require '../vendor/autoload.php'; // For Unione template authoload
+		
+            // Unione Template
+
+            $headers = array(
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+                'X-API-KEY' => '6bgqu7a8bd7xszkz1uonenrxwpdeium56kb1kb3y',
+            );
+
+            $client = new \GuzzleHttp\Client([
+                'base_uri' => 'https://eu1.unione.io/en/transactional/api/v1/'
+            ]);
+
+            $requestBody = [
+                "id" => "ad2bec40-c66b-11ee-b329-a285586d3219"
+            ];
+
+            $requestCxBody = [
+                "id" => "ba48f5ee-cc10-11ee-9303-c2e77d5b2991"
+            ];
+
+            $developerId = $request->session()->get('developerID');
+            $users = Developer::where('developer_id', $developer)->get();
+
+            foreach($users as $user)
+            {
+                $developerName = $user['company_name'];
+                $developerEmail = $user['email'];
+            }
+
+            //Unione Template
+
+            try {
+                $response = $client->request('POST', 'template/get.json', array(
+                    'headers' => $headers,
+                    'json' => $requestBody,
+                ));
+
+                $jsonResponse = $response->getBody()->getContents();
+
+                $responseData = json_decode($jsonResponse, true);
+
+                $htmlBody = $responseData['template']['body']['html'];
+
+                // $username = $data['name'];
+                // //$propertyName = $data['propName'];
+                // $amount = number_format($data['Amount']);
+                // $plan = $data['Plan'];
+                // $plancode = $data['plancode'];
+                // $chargeDate = $data['chargeDate'];
+                // $bookingID = $data['bookingID'];
+                // $currdate = $data['currentdate'];
+
+                //Replace the placeholder in the HTML body with the username
+
+                $amount = number_format($amount);
+
+                $htmlBody = str_replace('{{Propertydeveloper}}', $developerName, $htmlBody);
+                $htmlBody = str_replace('{{Lockdownfee}}', $amount, $htmlBody);
+                $htmlBody = str_replace('{{Date}}', $date, $htmlBody);
+                // $htmlBody = str_replace('{{Plan}}', $plan, $htmlBody);
+                // $htmlBody = str_replace('{{NextChargedate}}', $chargeDate, $htmlBody);
+                // $htmlBody = str_replace('{{BookingID}}', $bookingID, $htmlBody);
+                // $htmlBody = str_replace('{{Date}}', $currdate, $htmlBody);
+
+                $data['response'] = $htmlBody;
+
+                // Prepare the email data
+                $emailData = [
+                    "message" => [
+                        "recipients" => [
+                            ["email" => $developerEmail],
+                            //["email" => 'pidah.t@smallsmall.com']
+                        ],
+                        "body" => ["html" => $htmlBody],
+                        "subject" => "Property Payout",
+                        "from_email" => "donotreply@smallsmall.com",
+                        "from_name" => "Small Small",
+                    ],
+                ];
+
+                // Send the email using the Unione API
+                $responseEmail = $client->request('POST', 'email/send.json', [
+                    'headers' => $headers,
+                    'json' => $emailData,
+                ]);
+            } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+                $data['response'] = $e->getMessage();
+            }
+
+            if ($responseEmail) {
+
+                try {
+                    $response = $client->request('POST', 'template/get.json', array(
+                        'headers' => $headers,
+                        'json' => $requestCxBody,
+                    ));
+
+                    $jsonResponse = $response->getBody()->getContents();
+
+                    $responseData = json_decode($jsonResponse, true);
+
+                    $htmlBody = $responseData['template']['body']['html'];
+
+                    // Replace the placeholder in the HTML body with the username
+
+                    $htmlBody = str_replace('{{Propertydeveloper}}', $developerName, $htmlBody);
+                    $htmlBody = str_replace('{{Lockdownfee}}', $amount, $htmlBody);
+                    $htmlBody = str_replace('{{Date}}', $date, $htmlBody);
+                    // $htmlBody = str_replace('{{BookingID}}', $bookingID, $htmlBody);
+                    // $htmlBody = str_replace('{{Date}}', $currdate, $htmlBody);
+            
+                    $data['response'] = $htmlBody;
+
+                    // Prepare the email data
+                    $emailCxData = [
+                        "message" => [
+                            "recipients" => [
+                                ["email" => 'accounts@smallsmall.com'],
+                                ["email" => 'tunde.b@smallsmall.com'],
+                                ["email" => 'naomi.o@smallsmall.com'],
+                                ["email" => 'pidah.t@smallsmall.com']
+                            ],
+                            "body" => ["html" => $htmlBody],
+                            "subject" => "Property Payout!",
+                            "from_email" => "donotreply@smallsmall.com",
+                            "from_name" => "Small Small",
+                        ],
+                    ];
+
+                    // Send the email using the Unione API
+                    $responseEmail = $client->request('POST', 'email/send.json', [
+                        'headers' => $headers,
+                        'json' => $emailCxData,
+                    ]);
+                } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+                    $data['response'] = $e->getMessage();
+                }
+
+                echo 1;
+            }
         }
 
         else
@@ -1279,7 +1599,7 @@ class UserAuth extends Controller
     {
         $developers = Developer::all();
 
-        $propertys = Property::all();
+        $propertys = property::all();
 
         $products = Product::all();
 
@@ -1298,7 +1618,7 @@ class UserAuth extends Controller
         $parentPropty = $request->parentPropty;
         $receivable = $request->receivable;
         
-        $user = Property::where('propertyID', $propty)
+        $user = property::where('propertyID', $propty)
                 ->update(['availability' => $availability, 'receivable' => $receivable,]);
         
         if($user)
@@ -1311,11 +1631,332 @@ class UserAuth extends Controller
             echo 0;
         }        
     }
+
+    public function insrtProject(Request $request)
+    {
+        $developers = Developer::all();
+
+        $propertys = property::all();
+
+        $products = Product::all();
+
+        $parents = Project::all();
+
+        $customers  = Customer::all();
+        
+        return view("insertProject")->with(['developers' => $developers, 'propertys' => $propertys, 'parents' => $parents, 'products' => $products, 'customers' => $customers]);        
+    }
+
+    public function insrtProjects(Request $request)
+    {
+        $developer = $request->developer;
+        $parentPropty = $request->parentPropty;
+        $propty = $request->propty;
+        $proptyBed = $request->proptyBed;
+        $propertyPrice = $request->propertyPrice;
+        $availability = $request->availability;
+        $proptyId = rand(1000000, 999999999999);
+        $active = $request->active;
+        $proptyRange = $request->proptyRange;
+        
+        for($i = 0; $i < $proptyRange; $i++)
+        {
+            $j = $i +1;
+            $proptyId = rand(1000000, 999999999999);
+            $proptyTitle = $propty .' unit'.$j;
+
+            $user = new property;   
+            $user->propertyID = $proptyId;
+            $user->parent_id = $parentPropty;
+            $user->property_name = $proptyTitle;
+            $user->bed = $proptyBed;
+            $user->price = $propertyPrice;
+            $user->availability = $availability;
+            $user->active = $active;
+            $user->save();
+            
+            $sql = "INSERT INTO buytolet_property(propertyID, parent_id, property_name, bed, price, availability, active) VALUES ('$proptyId', '$parentPropty', '$proptyTitle', '$proptyBed', '$propertyPrice', '$availability', '$active')";
+
+            $results = DB::connection('mysql2')->insert($sql);
+
+            $property = Project::where('project_id', $parentPropty)
+            ->update(['active' => $active]);
+        }
+        
+        if($results)
+        {
+            echo 1;
+        }
+        
+        else
+        {
+            echo 0;
+        }        
+    }
+
+    public function updtParent(Request $request)
+    {
+        $developerId = $request->developer;
+
+        $sql = "SELECT * FROM `developer_property` WHERE developer_id = '$developerId'";
+
+        $results = DB::select($sql);
+        
+        foreach($results as $result)
+        {
+            echo '<option value = "'.$result->project_id.'">'.$result->project_name.'</option>';
+        }
+    }
+
+    public function updtFeature(Request $request)
+    {
+        $projectId = $request->project;
+
+        $sql = "SELECT * FROM `projecttypes` WHERE project_id = '$projectId'";
+
+        $results = DB::select($sql);
+
+        $data =  '<div class="col-12 mt-5 ">
+                <p>Project history</p>
+                <div class="my-md-3 my-2 p-3 default-background default-background-border table-responsive">
+                <table class="table custom-font-size-14">
+                    <thead class="">
+                    <tr>
+                        <th scope="col" class="border-top-0">Property Type</th>
+                        <th scope="col" class="border-top-0">Unit Type</th>
+                        <th scope="col" class="border-top-0">Unit Number</th>
+                        <th scope="col" class="border-top-0">Unit Price</th>
+                    </tr>
+                    </thead>
+                    <tbody>';
+                    
+                    foreach($results as $totResult)
+                    {
+                        $data .= '<tr>
+                            <td>'.$totResult->proptyType.'</td>
+                            <td>'.$totResult->property.'</td>
+                            <td>'.$totResult->unitNumber.'</td>
+                            <td>'.$totResult->sellingPrice.'</td>
+                        </tr>';
+                    }
+
+                $data .= '</tbody>
+                          </table>
+                          </div>
+                          </div>
+                          <br></br>
+                           </div>';
+                echo $data;
+
+        // $bed = []; $size = []; $price = [];
+
+        // foreach($results as $result)
+        // {
+        //     if(!in_array($result->property, $bed))
+        //     {
+        //         array_push($bed, $result->property);
+        //     }
+
+        //     if(!in_array($result->unitNumber, $size))
+        //     {
+        //         array_push($size, $result->unitNumber);
+        //     }
+
+        //     if(!in_array($result->sellingPrice, $price))
+        //     {
+        //         array_push($price, $result->sellingPrice);
+        //     } 
+        // }    
+        
+        // $data = []; $data['bed'] = $bed; $data['size'] = $size; $data['price'] = $price;
+
+        // $data = json_encode($data);
+
+        // print_r($data);
+    }
+
+    public function editProject(Request $request)
+    {
+        $projectID = $request->projectID;
+        $projectName = $request->projectName;
+        $projectPrice = $request->projectPrice;
+        $proptyType = $request->proptyType;
+        $unitNumber = $request->unitNumber;
+        $size = $request->size;
+        $reason =$request->Reason;
+        
+        $project = Project::where('project_id', $projectID)
+                ->update(['unit_amount' => $projectPrice, 'unit_number' => $unitNumber, 'Reason' => $reason]);
+
+        $projectType = ProjectType::where('project_id', $projectID)
+        ->update(['proptyType' => $proptyType, 'unitNumber' => $unitNumber, 'sellingPrice' => $projectPrice, 'size' => $size]);
+        
+        if($project)
+        {
+            if($projectType)
+            {
+                require '../vendor/autoload.php'; // For Unione template authoload
+		
+                // Unione Template
+
+                $headers = array(
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                    'X-API-KEY' => '6bgqu7a8bd7xszkz1uonenrxwpdeium56kb1kb3y',
+                );
+
+                $client = new \GuzzleHttp\Client([
+                    'base_uri' => 'https://eu1.unione.io/en/transactional/api/v1/'
+                ]);
+
+                $requestBody = [
+                    "id" => "a854a0f6-c669-11ee-94da-a6eca9b42236"
+                ];
+
+                $requestCxBody = [
+                    "id" => "58ec6c70-c73a-11ee-b22f-d2f5f39f6973"
+                ];
+
+                $developerId = $request->session()->get('developerID');
+                $users = Developer::where('developer_id', $developerId)->get();
+
+                foreach($users as $user)
+                {
+                    $developerName = $user['company_name'];
+                    $developerEmail = $user['email'];
+                }
+
+                //Unione Template
+
+                try {
+                    $response = $client->request('POST', 'template/get.json', array(
+                        'headers' => $headers,
+                        'json' => $requestBody,
+                    ));
+
+                    $jsonResponse = $response->getBody()->getContents();
+
+                    $responseData = json_decode($jsonResponse, true);
+
+                    $htmlBody = $responseData['template']['body']['html'];
+
+                    // $username = $data['name'];
+                    // //$propertyName = $data['propName'];
+                    // $amount = number_format($data['Amount']);
+                    // $plan = $data['Plan'];
+                    // $plancode = $data['plancode'];
+                    // $chargeDate = $data['chargeDate'];
+                    // $bookingID = $data['bookingID'];
+                    // $currdate = $data['currentdate'];
+
+                    //Replace the placeholder in the HTML body with the username
+
+                    $htmlBody = str_replace('{{Propertydeveloper}}', $developerName, $htmlBody);
+                    // $htmlBody = str_replace('{{PlanID}}', $plancode, $htmlBody);
+                    // $htmlBody = str_replace('{{RecurringAmount}}', $amount, $htmlBody);
+                    // $htmlBody = str_replace('{{Plan}}', $plan, $htmlBody);
+                    // $htmlBody = str_replace('{{NextChargedate}}', $chargeDate, $htmlBody);
+                    // $htmlBody = str_replace('{{BookingID}}', $bookingID, $htmlBody);
+                    // $htmlBody = str_replace('{{Date}}', $currdate, $htmlBody);
+
+                    $data['response'] = $htmlBody;
+
+                    // Prepare the email data
+                    $emailData = [
+                        "message" => [
+                            "recipients" => [
+                                ["email" => $developerEmail],
+                                //["email" => 'pidah.t@smallsmall.com']
+                            ],
+                            "body" => ["html" => $htmlBody],
+                            "subject" => "Property Update",
+                            "from_email" => "donotreply@smallsmall.com",
+                            "from_name" => "Small Small",
+                        ],
+                    ];
+
+                    // Send the email using the Unione API
+                    $responseEmail = $client->request('POST', 'email/send.json', [
+                        'headers' => $headers,
+                        'json' => $emailData,
+                    ]);
+                } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+                    $data['response'] = $e->getMessage();
+                }
+
+                if ($responseEmail) {
+
+                    //$selPrice = number_format($selPrice); 
+
+                    try {
+                        $response = $client->request('POST', 'template/get.json', array(
+                            'headers' => $headers,
+                            'json' => $requestCxBody,
+                        ));
+
+                        $jsonResponse = $response->getBody()->getContents();
+
+                        $responseData = json_decode($jsonResponse, true);
+
+                        $htmlBody = $responseData['template']['body']['html'];
+
+                        $projectPrice = number_format($projectPrice);
+
+                        // Replace the placeholder in the HTML body with the username
+
+                        $htmlBody = str_replace('{{Propertydeveloper}}', $developerName, $htmlBody);
+                        $htmlBody = str_replace('{{Projectname}}', $projectName, $htmlBody);
+                        $htmlBody = str_replace('{{numberofunits}}', $unitNumber, $htmlBody);
+                        $htmlBody = str_replace('{{Propertyprice}}', $projectPrice, $htmlBody);
+                        $htmlBody = str_replace('{{Updatereason}}', $reason, $htmlBody);
+                        // $htmlBody = str_replace('{{BookingID}}', $bookingID, $htmlBody);
+                        // $htmlBody = str_replace('{{Date}}', $currdate, $htmlBody);
+                
+                        $data['response'] = $htmlBody;
+
+                        // Prepare the email data
+                        $emailCxData = [
+                            "message" => [
+                                "recipients" => [
+                                    ["email" => 'marketing@smallsmall.com'],
+                                    ["email" => 'james.o@smallsmall.com'],
+                                    ["email" => 'hello@buysmallsmall.ng'],
+                                    ["email" => 'tunde.b@smallsmall.com'],
+                                    ["email" => 'naomi.o@smallsmall.com'],
+                                    ["email" => 'pidah.t@smallsmall.com']
+                                ],
+                                "body" => ["html" => $htmlBody],
+                                "subject" => "EDAP Property Update!",
+                                "from_email" => "donotreply@smallsmall.com",
+                                "from_name" => "Small Small",
+                            ],
+                        ];
+
+                        // Send the email using the Unione API
+                        $responseEmail = $client->request('POST', 'email/send.json', [
+                            'headers' => $headers,
+                            'json' => $emailCxData,
+                        ]);
+                    } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+                        $data['response'] = $e->getMessage();
+                    }
+                    
+                    echo 1;
+                }
+            }
+        }
+
+        else
+        {
+            echo 0;
+        }        
+    }
     
     public function logout(Request $request)
     {
         $request->session()->forget('developerID');
         $request->session()->forget('account');
+        $request->session()->forget('cx');
         $request->session()->forget('user');
         return redirect("/");
     }
