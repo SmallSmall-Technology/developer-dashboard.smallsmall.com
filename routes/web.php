@@ -59,7 +59,21 @@ Route::group(['middleware' => ['protectedAccounts']], function () {
     Route::get("/projectPayout", [UserAuth::class, 'projectPayout']);
 
     Route::post("/addPayouts", [UserAuth::class, 'addPayout']);
+});
 
+Route::group(['middleware' => ['protectedCx']], function () {
+
+    Route::get("/updateProject", [UserAuth::class, 'updateProject']);
+
+    Route::post("/updtFeature", [UserAuth::class, 'updtFeature']);
+
+    Route::post("/updtParent", [UserAuth::class, 'updtParent']);
+
+    Route::post("/updtPayouts", [UserAuth::class, 'updtPayouts']);
+
+    Route::get("/insertProject", [UserAuth::class, 'insrtProject']);
+    
+    Route::post("/insertProperty", [UserAuth::class, 'insrtProjects']);
 });
 
 Route::get("/logout", [UserAuth::class, 'logout']);
