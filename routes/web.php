@@ -65,6 +65,10 @@ Route::group(['middleware' => ['protectedCx']], function () {
 
     Route::get("/updateProject", [UserAuth::class, 'updateProject']);
 
+    Route::post("/updtFeature", [UserAuth::class, 'updtFeature']);
+
+    Route::post("/updtParent", [UserAuth::class, 'updtParent']);
+
     Route::post("/updtPayouts", [UserAuth::class, 'updtPayouts']);
 
     Route::get("/insertProject", [UserAuth::class, 'insrtProject']);

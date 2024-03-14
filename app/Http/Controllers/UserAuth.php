@@ -1462,9 +1462,9 @@ class UserAuth extends Controller
                 "id" => "ad2bec40-c66b-11ee-b329-a285586d3219"
             ];
 
-            // $requestCxBody = [
-            //     "id" => "9ba9f8e6-c737-11ee-a263-de9a1a910f06"
-            // ];
+            $requestCxBody = [
+                "id" => "ba48f5ee-cc10-11ee-9303-c2e77d5b2991"
+            ];
 
             $developerId = $request->session()->get('developerID');
             $users = Developer::where('developer_id', $developer)->get();
@@ -1517,7 +1517,7 @@ class UserAuth extends Controller
                     "message" => [
                         "recipients" => [
                             ["email" => $developerEmail],
-                            ["email" => 'pidah.t@smallsmall.com']
+                            //["email" => 'pidah.t@smallsmall.com']
                         ],
                         "body" => ["html" => $htmlBody],
                         "subject" => "Property Payout",
@@ -1536,6 +1536,53 @@ class UserAuth extends Controller
             }
 
             if ($responseEmail) {
+
+                try {
+                    $response = $client->request('POST', 'template/get.json', array(
+                        'headers' => $headers,
+                        'json' => $requestCxBody,
+                    ));
+
+                    $jsonResponse = $response->getBody()->getContents();
+
+                    $responseData = json_decode($jsonResponse, true);
+
+                    $htmlBody = $responseData['template']['body']['html'];
+
+                    // Replace the placeholder in the HTML body with the username
+
+                    $htmlBody = str_replace('{{Propertydeveloper}}', $developerName, $htmlBody);
+                    $htmlBody = str_replace('{{Lockdownfee}}', $amount, $htmlBody);
+                    $htmlBody = str_replace('{{Date}}', $date, $htmlBody);
+                    // $htmlBody = str_replace('{{BookingID}}', $bookingID, $htmlBody);
+                    // $htmlBody = str_replace('{{Date}}', $currdate, $htmlBody);
+            
+                    $data['response'] = $htmlBody;
+
+                    // Prepare the email data
+                    $emailCxData = [
+                        "message" => [
+                            "recipients" => [
+                                ["email" => 'accounts@smallsmall.com'],
+                                ["email" => 'tunde.b@smallsmall.com'],
+                                ["email" => 'naomi.o@smallsmall.com'],
+                                ["email" => 'pidah.t@smallsmall.com']
+                            ],
+                            "body" => ["html" => $htmlBody],
+                            "subject" => "Property Payout!",
+                            "from_email" => "donotreply@smallsmall.com",
+                            "from_name" => "Small Small",
+                        ],
+                    ];
+
+                    // Send the email using the Unione API
+                    $responseEmail = $client->request('POST', 'email/send.json', [
+                        'headers' => $headers,
+                        'json' => $emailCxData,
+                    ]);
+                } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+                    $data['response'] = $e->getMessage();
+                }
 
                 echo 1;
             }
@@ -1603,37 +1650,129 @@ class UserAuth extends Controller
     public function insrtProjects(Request $request)
     {
         $developer = $request->developer;
-        $propty = $request->propty;
-        $availability = $request->availability;
         $parentPropty = $request->parentPropty;
-        $active = $request->active;
-        $proptyPrice = $request->proptyPrice;
+        $propty = $request->propty;
+        $proptyBed = $request->proptyBed;
+        $propertyPrice = $request->propertyPrice;
+        $availability = $request->availability;
         $proptyId = rand(1000000, 999999999999);
+        $active = $request->active;
+        $proptyRange = $request->proptyRange;
         
-        $user = new property;   
-        $user->propertyID = $proptyId;
-        $user->parent_id = $parentPropty;
-        $user->property_name = $propty;
-        $user->availability = $availability;
-        $user->active = $active;
-        $user->price = $proptyPrice;
-
-        $property = Project::where('project_id', $parentPropty)
-        ->update(['active' => $active]);
-
-
-        if($user->save())
+        for($i = 0; $i < $proptyRange; $i++)
         {
-            if($property)
-            {
-                echo 1;
-            }
-        }
+            $j = $i +1;
+            $proptyId = rand(1000000, 999999999999);
+            $proptyTitle = $propty .' unit'.$j;
 
+            $user = new property;   
+            $user->propertyID = $proptyId;
+            $user->parent_id = $parentPropty;
+            $user->property_name = $proptyTitle;
+            $user->bed = $proptyBed;
+            $user->price = $propertyPrice;
+            $user->availability = $availability;
+            $user->active = $active;
+            $user->save();
+            
+            $sql = "INSERT INTO buytolet_property(propertyID, parent_id, property_name, bed, price, availability, active) VALUES ('$proptyId', '$parentPropty', '$proptyTitle', '$proptyBed', '$propertyPrice', '$availability', '$active')";
+
+            $results = DB::connection('mysql2')->insert($sql);
+
+            $property = Project::where('project_id', $parentPropty)
+            ->update(['active' => $active]);
+        }
+        
+        if($results)
+        {
+            echo 1;
+        }
+        
         else
         {
             echo 0;
         }        
+    }
+
+    public function updtParent(Request $request)
+    {
+        $developerId = $request->developer;
+
+        $sql = "SELECT * FROM `developer_property` WHERE developer_id = '$developerId'";
+
+        $results = DB::select($sql);
+        
+        foreach($results as $result)
+        {
+            echo '<option value = "'.$result->project_id.'">'.$result->project_name.'</option>';
+        }
+    }
+
+    public function updtFeature(Request $request)
+    {
+        $projectId = $request->project;
+
+        $sql = "SELECT * FROM `projecttypes` WHERE project_id = '$projectId'";
+
+        $results = DB::select($sql);
+
+        $data =  '<div class="col-12 mt-5 ">
+                <p>Project history</p>
+                <div class="my-md-3 my-2 p-3 default-background default-background-border table-responsive">
+                <table class="table custom-font-size-14">
+                    <thead class="">
+                    <tr>
+                        <th scope="col" class="border-top-0">Property Type</th>
+                        <th scope="col" class="border-top-0">Unit Type</th>
+                        <th scope="col" class="border-top-0">Unit Number</th>
+                        <th scope="col" class="border-top-0">Unit Price</th>
+                    </tr>
+                    </thead>
+                    <tbody>';
+                    
+                    foreach($results as $totResult)
+                    {
+                        $data .= '<tr>
+                            <td>'.$totResult->proptyType.'</td>
+                            <td>'.$totResult->property.'</td>
+                            <td>'.$totResult->unitNumber.'</td>
+                            <td>'.$totResult->sellingPrice.'</td>
+                        </tr>';
+                    }
+
+                $data .= '</tbody>
+                          </table>
+                          </div>
+                          </div>
+                          <br></br>
+                           </div>';
+                echo $data;
+
+        // $bed = []; $size = []; $price = [];
+
+        // foreach($results as $result)
+        // {
+        //     if(!in_array($result->property, $bed))
+        //     {
+        //         array_push($bed, $result->property);
+        //     }
+
+        //     if(!in_array($result->unitNumber, $size))
+        //     {
+        //         array_push($size, $result->unitNumber);
+        //     }
+
+        //     if(!in_array($result->sellingPrice, $price))
+        //     {
+        //         array_push($price, $result->sellingPrice);
+        //     } 
+        // }    
+        
+        // $data = []; $data['bed'] = $bed; $data['size'] = $size; $data['price'] = $price;
+
+        // $data = json_encode($data);
+
+        // print_r($data);
     }
 
     public function editProject(Request $request)

@@ -50,7 +50,7 @@
             </button>
             <div id="my-nav" class="collapse navbar-collapse justify-content-between">
                 <div class="" style=" width: 49%; font-weight: 600; color: #222222">
-                    <p>CX Portal</p>
+                    <p>Marketing Portal</p>
                 </div>
                 <ul class="justify-content-end nav">
                     <li class="nav-item mx-3">
@@ -155,53 +155,73 @@
                         <div class=" col-12">
                             <div class="form-row">
                                 <div class="form-group col-md-6">
-                                    <select id="developer" class="form-control input-custom">
+                                    <select id="developer" onchange="updateParent()" class="form-control input-custom">
                                         <option selected>Property Developer</option>
                                         @foreach($developers as $developer)
                                         <option value="{{$developer->developer_id}}">{{$developer->company_name}}</option>
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="form-group col-md-6">
-                                    <input type="text" name="propty" placeholder="Property name" id="propty" class="form-control input-custom">
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group col-md-6">
-                                    <select id="availability" class="form-control input-custom">
-                                        <option selected>Pick Availability</option>
-                                        <option value="locked">Locked</option>
-                                        <option value="sold">Sold</option>
-                                        <option value="available">Available</option>
-                                    </select>
-                                </div>
 
                                 <div class="form-group col-md-6">
-                                    <select id="parentPropty" class="form-control input-custom">
+                                    <select id="parentPropty" onchange="updateFeature()" class="form-control input-custom">
                                         <option selected>Parent Property</option>
-                                        @foreach($parents as $parent)
-                                        <option value="{{$parent->project_id}}">{{$parent->project_name}}</option>
-                                        @endforeach
                                     </select>
                                 </div>
                             </div>
 
-                            <div class="form-row">
-                                <div class="form-group col-md-6">
-                                    <select id="active" class="form-control input-custom" placeholder="Active">
-                                        <option disabled selected>Active</option>
-                                        <option value="1">Yes</option>
-                                        <option value="0">No</option>
-                                    </select>
+                            <div id = "nextInfo" style="display: none;">
+                                <div class="form-row" id = "proptyTable"></div>
+
+                                <div class="form-row" id = "div1">
+                                    <div class="form-group col-md-6">
+                                        <input type="text" name="propty" placeholder="New Property Title" id="propty" class="form-control input-custom">
+                                        </select>
+                                    </div>    
+                                
+                                    <div class="form-group col-md-6">
+                                        <select id="proptyBed" class="form-control input-custom">
+                                            <option selected>Property Type</option>
+                                            <option value="0">Studio</option>
+                                            <option value="1">1 bedroom</option>
+                                            <option value="2">2 bedroom</option>
+                                            <option value="3">3 bedroom</option>
+                                            <option value="4">4 bedroom</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="form-group col-md-6">
-                                    <input type="number" class="form-control input-custom" id="proptyPrice" placeholder="Property Price">
+
+                                <div class="form-row">
+                                    
+                                    <div class="form-group col-md-6">
+                                        <input type="number" id="propertyPrice" placeholder = "Property Price" class="form-control input-custom">
+                                    </div>
+
+                                    <div class="form-group col-md-6">
+                                        <select id="availability" class="form-control input-custom">
+                                            <option selected>Pick Availability</option>
+                                            <option value="locked">Locked</option>
+                                            <option value="sold">Sold</option>
+                                            <option value="available">Available</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <select id="active" class="form-control input-custom" placeholder="Active">
+                                            <option disabled selected>Active</option>
+                                            <option value="1">Yes</option>
+                                            <option value="0">No</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <input type="number" name="proptyRange" min = 0 max = 30 placeholder="Unit Range" id="proptyRange" class="form-control input-custom">
+                                    </div>
                                 </div>
                             </div>
-
                             <div class="col-12 pb-3" id="err" style="color: red"></div>
+
                 </form>
             </div>
             <div class="col-md-12 col-12  mt-5 ">
@@ -212,7 +232,7 @@
                                 <a href="#" class="w-100 btn  default-border-radius" type="button" style="border: 2px solid #662D91;">back</a>
                             </div>
                             <div class="col-6">
-                                <a href="\home" class="w-100 btn primary-background default-border-radius">Edit </a>
+                                <a href="\updateProject" class="w-100 btn primary-background default-border-radius">Edit </a>
                             </div>
                         </div>
 
@@ -242,25 +262,33 @@
                 $('#name').addClass('has-error');
                 $("#err").html("developer field cannot be empty");
                 return false;
-            } else if ($('#propty').val() == "") {
-                $('#inputState').addClass('has-error');
-                $("#err").html("property field cannot be empty");
-                return false;
-            } else if ($('#availability').val() == "") {
-                $('#inputCity').addClass('has-error');
-                $("#err").html("availability field cannot be empty");
-                return false;
             } else if ($('#parentPropty').val() == "") {
-                $('#address').addClass('has-error');
-                $("#err").html("parent Property field cannot be empty");
+                $('#parentPropty').addClass('has-error');
+                $("#err").html("property developer field cannot be empty");
                 return false;
-            } else if ($('#active').val() == "") {
+            } else if ($('#propty').val() == "") {
+                $('#propty').addClass('has-error');
+                $("#err").html("Parent property field cannot be empty");
+                return false;
+            } else if ($('#proptyBed').val() == "") {
+                $('#proptyBed').addClass('has-error');
+                $("#err").html("property Type field cannot be empty");
+                return false;
+            } else if ($('#propertyPrice').val() == "") {
+                $('#propertyPrice').addClass('has-error');
+                $("#err").html("Property price field cannot be empty");
+                return false;
+            }else if ($('#availability').val() == "") {
+                $('#availability').addClass('has-error');
+                $("#err").html("Availability field cannot be empty");
+                return false;
+            }else if ($('#active').val() == "") {
                 $('#active').addClass('has-error');
-                $("#err").html("active field cannot be empty");
+                $("#err").html("Active field cannot be empty");
                 return false;
-            }else if ($('#proptyPrice').val() == "") {
-                $('#proptyPrice').addClass('has-error');
-                $("#err").html("proptyPrice field cannot be empty");
+            }else if ($('#proptyRange').val() == "") {
+                $('#proptyRange').addClass('has-error');
+                $("#err").html("Unit Range field cannot be empty");
                 return false;
             }else {
                 //var data = $("#frm_login").serialize();
@@ -275,30 +303,38 @@
 
                 var developer = document.getElementById('developer').value;
 
+                var parentPropty = document.getElementById('parentPropty').value;
+
                 var propty = document.getElementById('propty').value;
+
+                var proptyBed = document.getElementById('proptyBed').value;
+
+                var propertyPrice = document.getElementById('propertyPrice').value;
 
                 var availability = document.getElementById('availability').value;
 
-                var parentPropty = document.getElementById('parentPropty').value;
-
                 var active = document.getElementById('active').value;
 
-                var proptyPrice = document.getElementById('proptyPrice').value;
+                var proptyRange = document.getElementById('proptyRange').value;
 
                 console.log(developer);
-                console.log(propty);
-                console.log(availability);
                 console.log(parentPropty);
+                console.log(propty);
+                console.log(proptyBed);
+                console.log(propertyPrice);
+                console.log(availability);
                 console.log(active);
-                console.log(proptyPrice);
+                console.log(proptyRange);
 
                 var data = {
                     "developer": developer,
-                    "propty": propty,
-                    "availability": availability,
                     "parentPropty": parentPropty,
+                    "propty": propty,
+                    "proptyBed": proptyBed,
+                    "propertyPrice": propertyPrice,
+                    "availability": availability,
                     "active": active,
-                    "proptyPrice": proptyPrice,
+                    "proptyRange": proptyRange,
                     _token: '{{csrf_token()}}'
                 };
 
@@ -327,5 +363,93 @@
                     }
                 });
             }
+        }
+
+        function updateFeature()
+        {
+            $.ajaxSetup({
+                    headers: {
+                        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+                    }
+                });
+
+            var selectBox = document.getElementById("parentPropty");
+            var selectedValue = selectBox.options[selectBox.selectedIndex].value;
+            
+            //console.log(selectedValue);
+            // console.log(propty);
+
+            var data = {
+                "project": selectedValue,
+                _token: '{{csrf_token()}}'
+            };
+
+            console.log(data);
+
+            $.ajax({
+
+                url: '/updtFeature',
+
+                type: "POST",
+
+                async: true,
+
+                data: data,
+
+                success: function(response) {
+
+                    // var response = JSON.parse(response)
+                    ////console.log(response['bed'].value);
+                    // for(let i=0; i < response['bed'].length; i++)
+                    // {
+                    //     console.log(response['bed'][i]);
+                    //}
+                    $('#proptyTable').append(response);
+                    document.getElementById("nextInfo").style.display = "block";
+                    //console.log(typeof response);
+                    //console.log(response);
+                    //window.location.href= data
+                }
+            });
+        }
+
+        function updateParent()
+        {
+            $.ajaxSetup({
+                    headers: {
+                        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+                    }
+                });
+
+            var selectBox = document.getElementById("developer");
+            var selectedValue = selectBox.options[selectBox.selectedIndex].value;
+            
+            console.log(selectedValue);
+            // console.log(propty);
+
+            var data = {
+                "developer": selectedValue,
+                // "proptyPrice": proptyPrice,
+                _token: '{{csrf_token()}}'
+            };
+
+            //console.log(data);
+
+            $.ajax({
+
+                url: '/updtParent',
+
+                type: "POST",
+
+                async: true,
+
+                data: data,
+
+                success: function(response) {
+                    $('#parentPropty').append(response);
+                    //console.log(response);
+                    //window.location.href= data
+                }
+            });
         }
     </script>
